@@ -1,5 +1,6 @@
 """Program that copies and sorts files by their extension"""
 
+import logging
 import asyncio
 import argparse
 from collections import defaultdict
@@ -21,16 +22,22 @@ def parse_arguments():
 
 async def read_folder(source_folder, files):
     """Function checks if the path is a file or a folder"""
-    async for path in source_folder.iterdir():
-        if await path.is_file():
-            files[path.suffix].append(path)
-        elif await path.is_dir():
-            await read_folder(path, files)
+    try:
+        async for path in source_folder.iterdir():
+            if await path.is_file():
+                files[path.suffix].append(path)
+            elif await path.is_dir():
+                await read_folder(path, files)
+    except Exception as e:
+        logging.error(f"Error reading folder {source_folder}: {e}")
 
 
 async def copy_file(file, output_folder):
     """Function copies the file to the output folder"""
-    await aioshutil.copy(file, output_folder / file.name)
+    try:
+        await aioshutil.copy(file, output_folder / file.name)
+    except Exception as e:
+        logging.error(f"Error copying file {file} to {output_folder}: {e}")
 
 
 async def main():
@@ -52,4 +59,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
     asyncio.run(main())
